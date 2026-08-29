@@ -15,15 +15,26 @@ import { useToast } from "@/components/ToastProvider";
 const MIN_PACE = 240;
 const MAX_PACE = 1200;
 
+const clamp = (value: number) =>
+  Math.min(MAX_PACE, Math.max(MIN_PACE, Math.round(value)));
+
 export function MiningPanel() {
   const active = useActiveUser();
   const mineSweat = useMarketStore((s) => s.mineSweat);
   const toast = useToast();
   const [pace, setPace] = useState(active.currentSeconds);
+  const [paceDraft, setPaceDraft] = useState(String(active.currentSeconds));
 
   useEffect(() => {
     setPace(active.currentSeconds);
+    setPaceDraft(String(active.currentSeconds));
   }, [active.id, active.currentSeconds]);
+
+  const commitPace = (value: number) => {
+    const clamped = clamp(value);
+    setPace(clamped);
+    setPaceDraft(String(clamped));
+  };
 
   const preview = calculateNormalizedScore(active.baselineSeconds, pace);
   const gain = preview.finalScore >= 0;
@@ -66,11 +77,16 @@ export function MiningPanel() {
             type="number"
             min={MIN_PACE}
             max={MAX_PACE}
-            value={pace}
+            value={paceDraft}
             onChange={(e) => {
+              // Clamp only on commit, so intermediate typed values survive.
+              setPaceDraft(e.target.value);
               const next = Number(e.target.value);
-              if (!Number.isNaN(next))
-                setPace(Math.min(MAX_PACE, Math.max(MIN_PACE, next)));
+              if (e.target.value !== "" && !Number.isNaN(next)) setPace(clamp(next));
+            }}
+            onBlur={() => commitPace(Number(paceDraft) || pace)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitPace(Number(paceDraft) || pace);
             }}
             className="w-20 rounded border border-zinc-800 bg-zinc-900 px-2 py-1 text-right text-xs font-bold outline-none focus:border-[#00FF66]/50"
           />
@@ -82,7 +98,10 @@ export function MiningPanel() {
           max={MAX_PACE}
           step={5}
           value={[pace]}
-          onValueChange={([v]) => setPace(v)}
+          onValueChange={([v]) => {
+            setPace(v);
+            setPaceDraft(String(v));
+          }}
           aria-label="Workout pace in seconds per mile"
         >
           <Slider.Track className="relative h-1 grow rounded-full bg-zinc-800">
