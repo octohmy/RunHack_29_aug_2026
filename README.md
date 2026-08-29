@@ -5,6 +5,8 @@ improvement* (Delta), not absolute speed. A beginner going 15:00 → 13:30/mi ca
 beat an elite marathoner shaving 5 seconds, because raw improvement is weighted
 by a physiological ceiling multiplier.
 
+Live: https://deltabet.vercel.app
+
 ## Run it
 
 ```bash
